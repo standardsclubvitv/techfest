@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile - Hackathon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/profile.css">
+</head>
+<body>
+    <!-- Code Rain Background -->
+    <div class="code-rain" id="codeRain"></div>
+
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <h1>GRAVITAS 2025</h1>
+            <div class="nav-info">Complete Your Profile</div>
+        </div>
+    </nav>
+
+    <!-- Profile Container -->
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="progress-steps">
+                <div class="step completed">1</div>
+                <div class="step active">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <h2>Complete Your Profile</h2>
+            <p>Please provide the following information to complete your registration</p>
+            
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="hostelBlock">Hostel Block:</label>
+                    <input type="text" id="hostelBlock" placeholder="Example : S Block" name="hostelBlock" required autocomplete="off">
+                    <div class="validation-message" id="hostelBlockMessage"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mobileNumber">Mobile Number:</label>
+                    <input type="tel" id="mobileNumber" name="mobileNumber" required 
+                           pattern="[0-9]{10}" placeholder="Enter 10-digit mobile number" autocomplete="tel">
+                    <div class="validation-message" id="mobileMessage"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regNumber">Registration Number:</label>
+                    <input type="text" id="regNumber" name="regNumber" 
+                           placeholder="Enter in UPPERCASE (e.g., 21BCE1234)" required autocomplete="off">
+                    <div class="validation-message" id="regNumberMessage"></div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <div class="btn-content">
+                        <div class="loader" id="btnLoader"></div>
+                        <span id="btnText">Complete Profile</span>
+                    </div>
+                </button>
+                
+                <div id="error-message" class="message error-message"></div>
+                <div id="success-message" class="message success-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Overlay -->
+    <div class="status-overlay" id="statusOverlay">
+        <div class="status-content">
+            <div class="loader"></div>
+            <h3>Processing Your Profile</h3>
+            <p>Please wait while we update your information...</p>
+        </div>
+    </div>
+
+    <script>
+        // Code Rain Animation (same as hackathon page)
+        const codeSnippets = [
+            'function hackathon()',
+            'class Innovation',
+            'const standards = BIS',
+            'if (solution.isValid)',
+            'while (coding)',
+            'import standards',
+            'let creativity = true',
+            'async function build()',
+            'const team = []',
+            'export default app',
+            'try { innovate() }',
+            'for (let i = 0; i < 48; i++)',
+            'return success',
+            'npm install innovation',
+            'git commit -m "hackathon"',
+            'console.log("Gravitas")',
+            'React.useState()',
+            'API.standards.get()',
+            'machine.learning()',
+            'blockchain.verify()',
+            'IoT.connect()',
+            'AI.process()',
+            'data.analyze()',
+            'security.encrypt()',
+            'app.deploy()',
+            'test.run()',
+            'debug.fix()',
+            'optimize.performance()',
+            'validate.input()',
+            'render.component()'
+        ];
+
+        function createCodeDrop() {
+            const drop = document.createElement('div');
+            drop.className = 'code-drop';
+            drop.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+            
+            const startX = Math.random() * window.innerWidth;
+            const duration = Math.random() * 3 + 2;
+            const fontSize = Math.random() * 6 + 10;
+            
+            drop.style.left = startX + 'px';
+            drop.style.fontSize = fontSize + 'px';
+            drop.style.animationDuration = duration + 's';
+            drop.style.opacity = Math.random() * 0.7 + 0.3;
+            
+            document.getElementById('codeRain').appendChild(drop);
+            
+            setTimeout(() => {
+                if (drop.parentNode) {
+                    drop.parentNode.removeChild(drop);
+                }
+            }, duration * 1000);
+        }
+
+        // Create code drops continuously
+        setInterval(createCodeDrop, 300);
+
+        // Form validation patterns
+        const validationRules = {
+            hostelBlock: {
+                pattern: /^[A-Za-z0-9\s-]+$/,
+                message: 'Please enter a valid hostel block'
+            },
+            mobileNumber: {
+                pattern: /^[0-9]{10}$/,
+                message: 'Please enter a valid 10-digit mobile number'
+            },
+            regNumber: {
+                pattern: /^[A-Z0-9]{8,12}$/,
+                message: 'Please enter a valid registration number in UPPERCASE'
+            }
+        };
+
+        // Real-time validation
+        function validateField(fieldName, value) {
+            const rule = validationRules[fieldName];
+            const field = document.getElementById(fieldName);
+            
+            // Map field names to their corresponding message element IDs
+            const messageIds = {
+                'hostelBlock': 'hostelBlockMessage',
+                'mobileNumber': 'mobileMessage',
+                'regNumber': 'regNumberMessage'
+            };
+            
+            const message = document.getElementById(messageIds[fieldName]);
+            
+            if (rule && rule.pattern.test(value.trim())) {
+                field.classList.remove('invalid');
+                field.classList.add('valid');
+                if (message) {
+                    message.textContent = '✓ Valid';
+                    message.className = 'validation-message success show';
+                }
+                return true;
+            } else if (value.trim() !== '') {
+                field.classList.remove('valid');
+                field.classList.add('invalid');
+                if (message) {
+                    message.textContent = rule.message;
+                    message.className = 'validation-message error show';
+                }
+                return false;
+            } else {
+                field.classList.remove('valid', 'invalid');
+                if (message) {
+                    message.className = 'validation-message';
+                }
+                return false;
+            }
+        }
+
+        // Add event listeners for real-time validation
+        document.getElementById('hostelBlock').addEventListener('input', (e) => {
+            validateField('hostelBlock', e.target.value);
+        });
+
+        document.getElementById('mobileNumber').addEventListener('input', (e) => {
+            // Only allow numbers
+            e.target.value = e.target.value.replace(/\D/g, '');
+            if (e.target.value.length > 10) {
+                e.target.value = e.target.value.slice(0, 10);
+            }
+            validateField('mobileNumber', e.target.value);
+        });
+
+        document.getElementById('regNumber').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+            validateField('regNumber', e.target.value);
+        });
+
+        // Form submission
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnLoader = document.getElementById('btnLoader');
+            const btnText = document.getElementById('btnText');
+            const statusOverlay = document.getElementById('statusOverlay');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            // Hide previous messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // Validate all fields
+            const formData = new FormData(e.target);
+            const profileData = {
+                hostelBlock: formData.get('hostelBlock').trim(),
+                mobileNumber: formData.get('mobileNumber').trim(),
+                regNumber: formData.get('regNumber').trim().toUpperCase()
+            };
+            
+            let isValid = true;
+            for (const [key, value] of Object.entries(profileData)) {
+                if (!validateField(key, value)) {
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                showError('Please correct the errors above before submitting.');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            btnLoader.style.display = 'inline-block';
+            btnText.textContent = 'Processing...';
+            statusOverlay.style.display = 'flex';
+            
+            try {
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                const data = await response.json();
+
+                // Hide loading overlay
+                statusOverlay.style.display = 'none';
+
+                if (data.success) {
+                    showSuccess('Profile updated successfully! Redirecting...');
+                    
+                    // Update progress steps
+                    document.querySelectorAll('.step')[1].classList.remove('active');
+                    document.querySelectorAll('.step')[1].classList.add('completed');
+                    document.querySelectorAll('.step')[2].classList.add('active');
+                    
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/dashboard';
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Profile update failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                statusOverlay.style.display = 'none';
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnLoader.style.display = 'none';
+                btnText.textContent = 'Complete Profile';
+            }
+        });
+
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('success-message');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Prevent form submission on Enter key for better UX
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                const form = e.target.closest('form');
+                if (form) {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn && !submitBtn.disabled) {
+                        submitBtn.click();
+                    }
+                }
+            }
+        });
+
+        // Auto-focus first input
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('hostelBlock').focus();
+        });
+    </script>
+</body>
+</html>

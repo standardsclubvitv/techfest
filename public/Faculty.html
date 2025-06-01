@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard - Hackathon</title>
+    <link rel="stylesheet" href="./css/faculty.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <h1>Faculty Dashboard</h1>
+            <button id="signOutBtn" class="signout-btn">Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="faculty-container">
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('users')">Users</button>
+            <button class="tab-button" onclick="showTab('teams')">Team Requests</button>
+            <button class="tab-button" onclick="showTab('submissions')">Submissions</button>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Registered Users</h2>
+                <div>
+                    <div id="users-status" class="status-indicator status-loading">
+                        <span class="loading-spinner"></span>
+                        Loading users...
+                    </div>
+                    <button onclick="loadUsers()" class="refresh-btn">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Registration Number</th>
+                            <th>Mobile Number</th>
+                            <th>Hostel Block</th>
+                            <th>Profile Status</th>
+                            <th>Registered At</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Teams Tab -->
+        <div id="teams-tab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Team Requests</h2>
+                <div>
+                    <div id="teams-status" class="status-indicator status-loading">
+                        <span class="loading-spinner"></span>
+                        Loading teams...
+                    </div>
+                    <button onclick="loadTeams()" class="refresh-btn">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="teams-table">
+                    <thead>
+                        <tr>
+                            <th>Team Name</th>
+                            <th>Leader</th>
+                            <th>Members</th>
+                            <th>Track</th>
+                            <th>Topic</th>
+                            <th>PPT Link</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Submissions Tab -->
+        <div id="submissions-tab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Project Submissions</h2>
+                <div>
+                    <div id="submissions-status" class="status-indicator status-loading">
+                        <span class="loading-spinner"></span>
+                        Loading submissions...
+                    </div>
+                    <button onclick="loadSubmissions()" class="refresh-btn">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="submissions-table">
+                    <thead>
+                        <tr>
+                            <th>Team Name</th>
+                            <th>Leader</th>
+                            <th>Track</th>
+                            <th>Topic</th>
+                            <th>GitHub Link</th>
+                            <th>LinkedIn Link</th>
+                            <th>Submitted At</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approval-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Review Team Request</h3>
+            <div id="team-details-modal"></div>
+            <form id="approval-form">
+                <input type="hidden" id="team-id" name="teamId">
+                <div class="form-group">
+                    <label for="status">Decision:</label>
+                    <select id="status" name="status" required>
+                        <option value="">Select Decision</option>
+                        <option value="approved">Approve</option>
+                        <option value="rejected">Reject</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statusDescription">Description (Optional):</label>
+                    <textarea id="statusDescription" name="statusDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Submit Decision</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'users';
+        let users = [];
+        let teams = [];
+        let submissions = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            loadTeams();
+            loadSubmissions();
+            
+            // Set up auto-refresh every 30 seconds
+            setInterval(() => {
+                if (currentTab === 'users') loadUsers();
+                else if (currentTab === 'teams') loadTeams();
+                else if (currentTab === 'submissions') loadSubmissions();
+            }, 30000);
+        });
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            currentTab = tabName;
+
+            // Load data if needed
+            if (tabName === 'users' && users.length === 0) loadUsers();
+            else if (tabName === 'teams' && teams.length === 0) loadTeams();
+            else if (tabName === 'submissions' && submissions.length === 0) loadSubmissions();
+        }
+
+        function updateStatus(section, status, message) {
+            const statusEl = document.getElementById(`${section}-status`);
+            statusEl.className = `status-indicator status-${status}`;
+            
+            if (status === 'loading') {
+                statusEl.innerHTML = '<span class="loading-spinner"></span>' + message;
+            } else {
+                statusEl.innerHTML = message;
+            }
+        }
+
+        async function loadUsers() {
+            updateStatus('users', 'loading', 'Loading users...');
+            
+            try {
+                const response = await fetch('/api/faculty/users');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                users = await response.json();
+                
+                if (!Array.isArray(users)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                renderUsersTable();
+                updateStatus('users', 'online', `${users.length} users loaded`);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                updateStatus('users', 'error', 'Failed to load users');
+                showMessage('Failed to load users: ' + error.message, 'error');
+            }
+        }
+
+        async function loadTeams() {
+            updateStatus('teams', 'loading', 'Loading teams...');
+            
+            try {
+                const response = await fetch('/api/faculty/teams');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                teams = await response.json();
+                
+                if (!Array.isArray(teams)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                renderTeamsTable();
+                updateStatus('teams', 'online', `${teams.length} teams loaded`);
+            } catch (error) {
+                console.error('Error loading teams:', error);
+                updateStatus('teams', 'error', 'Failed to load teams');
+                showMessage('Failed to load teams: ' + error.message, 'error');
+            }
+        }
+
+        async function loadSubmissions() {
+            updateStatus('submissions', 'loading', 'Loading submissions...');
+            
+            try {
+                const response = await fetch('/api/faculty/submissions');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                submissions = await response.json();
+                
+                if (!Array.isArray(submissions)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                renderSubmissionsTable();
+                updateStatus('submissions', 'online', `${submissions.length} submissions loaded`);
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+                updateStatus('submissions', 'error', 'Failed to load submissions');
+                showMessage('Failed to load submissions: ' + error.message, 'error');
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.querySelector('#users-table tbody');
+            tbody.innerHTML = '';
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #666;">No users found</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.regNumber || 'N/A'}</td>
+                    <td>${user.mobileNumber || 'N/A'}</td>
+                    <td>${user.hostelBlock || 'N/A'}</td>
+                    <td><span class="status-${user.profileComplete ? 'complete' : 'incomplete'}">${user.profileComplete ? 'Complete' : 'Incomplete'}</span></td>
+                    <td>${user.createdAt ? new Date(user.createdAt._seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderTeamsTable() {
+            const tbody = document.querySelector('#teams-table tbody');
+            tbody.innerHTML = '';
+
+            if (teams.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No teams found</td></tr>';
+                return;
+            }
+
+            teams.forEach(team => {
+                const row = document.createElement('tr');
+                const statusClass = team.status === 'approved' ? 'status-approved' : 
+                                   team.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                
+                row.innerHTML = `
+                    <td>${team.teamName || 'N/A'}</td>
+                    <td>${team.memberDetails && team.memberDetails[0] ? team.memberDetails[0].name : 'N/A'}</td>
+                    <td>${team.memberDetails ? team.memberDetails.map(m => m.name).join(', ') : 'N/A'}</td>
+                    <td>${team.track || 'N/A'}</td>
+                    <td>${team.topic || 'N/A'}</td>
+                    <td><a href="${team.pptLink}" target="_blank">View PPT</a></td>
+                    <td><span class="${statusClass}">${(team.status || 'pending').toUpperCase()}</span></td>
+                    <td>
+                        ${team.status === 'pending' ? 
+                            `<button onclick="openApprovalModal('${team.id}')" class="approve-btn">Review</button>` : 
+                            'Reviewed'
+                        }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderSubmissionsTable() {
+            const tbody = document.querySelector('#submissions-table tbody');
+            tbody.innerHTML = '';
+
+            if (submissions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #666;">No submissions found</td></tr>';
+                return;
+            }
+
+            submissions.forEach(submission => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${submission.teamName || 'N/A'}</td>
+                    <td>${submission.memberDetails && submission.memberDetails[0] ? submission.memberDetails[0].name : 'N/A'}</td>
+                    <td>${submission.track || 'N/A'}</td>
+                    <td>${submission.topic || 'N/A'}</td>
+                    <td><a href="${submission.githubLink}" target="_blank">GitHub</a></td>
+                    <td><a href="${submission.linkedinLink}" target="_blank">LinkedIn</a></td>
+                    <td>${submission.submittedAt ? new Date(submission.submittedAt._seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openApprovalModal(teamId) {
+            const team = teams.find(t => t.id === teamId);
+            if (!team) return;
+
+            document.getElementById('team-id').value = teamId;
+            document.getElementById('team-details-modal').innerHTML = `
+                <div class="team-modal-details">
+                    <h4>${team.teamName}</h4>
+                    <p><strong>Track:</strong> ${team.track}</p>
+                    <p><strong>Topic:</strong> ${team.topic}</p>
+                    <p><strong>Members:</strong></p>
+                    <ul>
+                        ${team.memberDetails.map(member => 
+                            `<li>${member.name} (${member.regNumber}) - ${member.email}</li>`
+                        ).join('')}
+                    </ul>
+                    <p><strong>Description:</strong> ${team.description}</p>
+                    <p><strong>PPT Link:</strong> <a href="${team.pptLink}" target="_blank">View Presentation</a></p>
+                </div>
+            `;
+
+            document.getElementById('approval-modal').style.display = 'block';
+        }
+
+        // Modal close functionality
+        document.querySelector('.close').addEventListener('click', () => {
+            document.getElementById('approval-modal').style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === document.getElementById('approval-modal')) {
+                document.getElementById('approval-modal').style.display = 'none';
+            }
+        });
+
+        // Approval form handler
+        document.getElementById('approval-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const approvalData = {
+                teamId: formData.get('teamId'),
+                status: formData.get('status'),
+                statusDescription: formData.get('statusDescription')
+            };
+
+            try {
+                const response = await fetch('/api/faculty/team/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(approvalData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    throw new Error(data.error || 'Approval failed');
+                }
+
+                document.getElementById('approval-modal').style.display = 'none';
+                loadTeams(); // Reload teams
+                loadSubmissions(); // Reload submissions to get updated data
+            } catch (error) {
+                console.error('Approval error:', error);
+                showMessage('Approval failed: ' + error.message, 'error');
+            }
+        });
+
+        // Sign out handler
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/auth/signout', { method: 'POST' });
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    throw new Error('Sign out failed');
+                }
+            } catch (error) {
+                console.error('Sign out error:', error);
+                // Still redirect even if API fails
+                window.location.href = '/';
+            }
+        });
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            
+            // Auto-hide message after 5 seconds
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
+            }, 5000);
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showTab('users');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showTab('teams');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showTab('submissions');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        if (currentTab === 'users') loadUsers();
+                        else if (currentTab === 'teams') loadTeams();
+                        else if (currentTab === 'submissions') loadSubmissions();
+                        break;
+                }
+            }
+        });
+
+        // Add tooltip for keyboard shortcuts
+        const shortcuts = document.createElement('div');
+        shortcuts.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        `;
+        shortcuts.innerHTML = `
+            <div><strong>Keyboard Shortcuts:</strong></div>
+            <div>Ctrl+1: Users</div>
+            <div>Ctrl+2: Teams</div>
+            <div>Ctrl+3: Submissions</div>
+            <div>Ctrl+R: Refresh</div>
+        `;
+        document.body.appendChild(shortcuts);
+
+        // Show shortcuts on hover over tabs
+        document.querySelector('.tabs').addEventListener('mouseenter', () => {
+            shortcuts.style.opacity = '1';
+        });
+        document.querySelector('.tabs').addEventListener('mouseleave', () => {
+            shortcuts.style.opacity = '0';
+        });
+    </script>
+</body>
+</html>

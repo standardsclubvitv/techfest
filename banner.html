@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standards Hackathon Banner</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .banner {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #0f0f23 100%);
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 204, 255, 0.3);
+        }
+        
+        /* Circuit Pattern Background */
+        .circuit-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #00ccff 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, #00ccff 2px, transparent 2px),
+                linear-gradient(90deg, transparent 48%, #00ccff 49%, #00ccff 51%, transparent 52%),
+                linear-gradient(0deg, transparent 48%, #00ccff 49%, #00ccff 51%, transparent 52%);
+            background-size: 100px 100px, 100px 100px, 50px 50px, 50px 50px;
+            animation: circuitFlow 20s linear infinite;
+        }
+        
+        @keyframes circuitFlow {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(-50px) translateY(-50px); }
+        }
+        
+        /* Glowing Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 204, 255, 0.8) 0%, rgba(0, 204, 255, 0.2) 50%, transparent 100%);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .orb1 {
+            width: 150px;
+            height: 150px;
+            top: 10%;
+            right: 10%;
+            animation-delay: 0s;
+        }
+        
+        .orb2 {
+            width: 100px;
+            height: 100px;
+            bottom: 15%;
+            left: 8%;
+            animation-delay: 2s;
+        }
+        
+        .orb3 {
+            width: 80px;
+            height: 80px;
+            top: 60%;
+            right: 25%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+        
+        /* Content Container */
+        .content {
+            position: relative;
+            z-index: 10;
+            padding: 60px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Main Title */
+        .title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            text-shadow: 0 0 30px rgba(0, 204, 255, 0.8);
+            background: linear-gradient(45deg, #ffffff, #00ccff, #ffffff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Subtitle */
+        .subtitle {
+            font-size: 2rem;
+            color: #00ccff;
+            text-align: center;
+            margin: 10px 0 30px 0;
+            font-weight: 600;
+            text-shadow: 0 0 20px rgba(0, 204, 255, 0.6);
+        }
+        
+        /* Theme Text */
+        .theme {
+            font-size: 1.3rem;
+            color: #cccccc;
+            text-align: center;
+            margin: 0 0 40px 0;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        
+        /* Info Boxes */
+        .info-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 40px;
+        }
+        
+        .info-box {
+            background: rgba(0, 204, 255, 0.1);
+            border: 2px solid rgba(0, 204, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 204, 255, 0.2);
+        }
+        
+        .info-box h3 {
+            color: #00ccff;
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .info-box p {
+            color: #ffffff;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .prize-highlight {
+            font-size: 2rem !important;
+            color: #ffd700 !important;
+            font-weight: 900 !important;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+        
+        /* Organizer Info */
+        .organizer {
+            position: absolute;
+            bottom: 20px;
+            left: 60px;
+            right: 60px;
+            text-align: center;
+            color: #888888;
+            font-size: 0.9rem;
+        }
+        
+        .organizer strong {
+            color: #00ccff;
+        }
+        
+        /* Tech Elements */
+        .tech-element {
+            position: absolute;
+            color: rgba(0, 204, 255, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            animation: codeScroll 15s linear infinite;
+        }
+        
+        .tech1 {
+            top: 20px;
+            left: 20px;
+            animation-delay: 0s;
+        }
+        
+        .tech2 {
+            top: 50px;
+            right: 50px;
+            animation-delay: 5s;
+        }
+        
+        .tech3 {
+            bottom: 80px;
+            left: 100px;
+            animation-delay: 10s;
+        }
+        
+        @keyframes codeScroll {
+            0% { opacity: 0; transform: translateY(10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        
+        /* Download Button */
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #00ccff, #0099cc);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 204, 255, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 204, 255, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn" onclick="downloadBanner()">📥 Download PNG</button>
+    
+    <div class="banner" id="banner">
+        <!-- Background Elements -->
+        <div class="circuit-bg"></div>
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+        
+        <!-- Tech Code Elements -->
+        <div class="tech-element tech1">function innovate() { return standards.BIS(); }</div>
+        <div class="tech-element tech2">const hackathon = await build.solution();</div>
+        <div class="tech-element tech3">if (team.ready) { start.coding(); }</div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h1 class="title">STANDARDS HACKATHON</h1>
+            <p class="subtitle">Gravitas 2025</p>
+            <p class="theme">"Innovating with Standards: Building a Compliant Future"</p>
+            
+            <div class="info-container">
+                <div class="info-box">
+                    <h3>Duration</h3>
+                    <p>48 Hours<br>2 Days • 2 Nights</p>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Prize Pool</h3>
+                    <p class="prize-highlight">₹80,000</p>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Team Size</h3>
+                    <p>3-5 Members<br>VIT Students</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Organizer Info -->
+        <div class="organizer">
+            <strong>BIS Standards Club, VIT Vellore</strong> • In Association with <strong>Bureau of Indian Standards, Chennai</strong>
+        </div>
+    </div>
+
+    <script>
+        function downloadBanner() {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1200;
+            canvas.height = 630;
+            
+            // Get banner element
+            const banner = document.getElementById('banner');
+            
+            // Use html2canvas library (we'll simulate this with a simple approach)
+            // In a real implementation, you'd use html2canvas or similar library
+            
+            // For now, let's create a simple download link
+            const link = document.createElement('a');
+            link.download = 'standards-hackathon-banner-1200x630.png';
+            
+            // Since we can't directly convert HTML to canvas in this environment,
+            // we'll provide instructions
+            alert('To download as PNG:\n\n1. Right-click on the banner\n2. Select "Save image as..." or use browser screenshot tools\n3. Or use browser developer tools to capture the banner element\n\nOptimal size: 1200x630px for social media sharing');
+        }
+        
+        // Add some dynamic effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add subtle mouse movement effects
+            document.addEventListener('mousemove', function(e) {
+                const orbs = document.querySelectorAll('.orb');
+                const mouseX = e.clientX / window.innerWidth;
+                const mouseY = e.clientY / window.innerHeight;
+                
+                orbs.forEach((orb, index) => {
+                    const speed = (index + 1) * 0.5;
+                    const x = (mouseX - 0.5) * speed;
+                    const y = (mouseY - 0.5) * speed;
+                    orb.style.transform += ` translate(${x}px, ${y}px)`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

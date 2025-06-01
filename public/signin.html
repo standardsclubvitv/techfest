@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Hackathon</title>
+    <link rel="stylesheet" href="./css/signin.css">
+</head>
+<body>
+    <div class="signin-container">
+        <div class="signin-card">
+            <h2>Sign In to Continue</h2>
+            <p>Use your Google account to sign in</p>
+            <button id="googleSignIn" class="google-signin-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" width="20" height="20">
+                Sign in with Google
+            </button>
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+        let firebaseConfig;
+        let app, auth, provider;
+
+        // Get Firebase config from server
+        fetch('/api/config')
+            .then(response => response.json())
+            .then(config => {
+                firebaseConfig = config;
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                provider = new GoogleAuthProvider();
+            })
+            .catch(error => {
+                console.error('Error loading Firebase config:', error);
+                showError('Failed to load configuration');
+            });
+
+        document.getElementById('googleSignIn').addEventListener('click', async () => {
+            try {
+                if (!auth) {
+                    showError('Authentication not initialized');
+                    return;
+                }
+
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                const idToken = await user.getIdToken();
+
+                const userData = {
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                };
+
+                const response = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken, userData })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    showError(data.error || 'Sign in failed');
+                }
+            } catch (error) {
+                console.error('Sign in error:', error);
+                showError('Sign in failed. Please try again.');
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hackathon</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+     <link rel="stylesheet" href="./css/dashboard.css">
+    
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader"></div>
+            <div class="loader-text">Loading your dashboard...</div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <h1>Hackathon Dashboard</h1>
+            <div style="display: flex; align-items: center;">
+                <button id="helpBtn" class="help-btn">
+                    <span>ℹ️</span> Help
+                </button>
+                <button id="signOutBtn" class="signout-btn">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+    <!-- Help Modal -->
+    <div id="helpModal" class="help-modal">
+        <div class="help-modal-content">
+            <span class="help-close" id="helpClose">&times;</span>
+            <h2>Technical Support</h2>
+
+            <div class="support-container">
+                <h3>
+                    <span>🛠️</span> Need Help?
+                </h3>
+                <p>
+                    For any technical issues, management support, or queries related to the hackathon platform,
+                    please don't hesitate to reach out to our support team.
+                </p>
+
+                <div class="support-email">
+                    <p><strong>Email:</strong></p>
+                    <strong>standardsclub@vit.ac.in</strong>
+                </div>
+
+                <div class="support-note">
+                    <p><strong>📸 Pro Tip:</strong> When reporting issues, please include a screenshot of the problem
+                        along with your message for faster resolution.</p>
+                </div>
+
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                    Our support team will responds within 10-15 mins.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-container" id="dashboardContainer">
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <h2>Hackathon Timeline</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3>Registration Opens</h3>
+                        <p>May 1, 2025 - May 15, 2025</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3>Team Formation</h3>
+                        <p>May 16, 2025 - May 20, 2025</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3>Hackathon Event</h3>
+                        <p>June 1, 2025 - June 2, 2025</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3>Results</h3>
+                        <p>June 5, 2025</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Section -->
+        <div class="team-section">
+            <!-- Loading skeleton -->
+            <div id="team-skeleton" class="team-card" style="display: none;">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text" style="width: 80%;"></div>
+            </div>
+
+            <div id="no-team" class="team-card" style="display: none;">
+                <h2>Create Your Team</h2>
+                <form id="teamForm">
+                    <div class="form-group">
+                        <label for="teamName">Team Name:</label>
+                        <input type="text" id="teamName" name="teamName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Team Members (Registration Numbers):</label>
+                        <input type="text" id="member1" name="member1" placeholder="Member 1 Reg No" required>
+                        <input type="text" id="member2" name="member2" placeholder="Member 2 Reg No" required>
+                        <input type="text" id="member3" name="member3" placeholder="Member 3 Reg No (Optional)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="track">Select Track:</label>
+                        <select id="track" name="track" required>
+                            <option value="">Choose Track</option>
+                            <option value="web-development">Web Development</option>
+                            <option value="mobile-app">Mobile App Development</option>
+                            <option value="ai-ml">AI/ML</option>
+                            <option value="blockchain">Blockchain</option>
+                            <option value="iot">IoT</option>
+                            <option value="cybersecurity">Cybersecurity</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="topic">Topic:</label>
+                        <input type="text" id="topic" name="topic" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pptLink">PPT Link:</label>
+                        <input type="url" id="pptLink" name="pptLink" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea id="description" name="description" rows="4" required></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="createTeamBtn">Create Team</button>
+                </form>
+            </div>
+
+            <div id="has-team" class="team-card" style="display: none;">
+                <h2>Your Team</h2>
+                <div id="team-details"></div>
+
+                <!-- Submission Form (for new submissions) -->
+                <div id="submission-form" style="display: none;">
+                    <h3>Submit Your Project</h3>
+                    <form id="submissionForm">
+                        <div class="form-group">
+                            <label for="githubLink">GitHub Repository Link:</label>
+                            <input type="url" id="githubLink" name="githubLink" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="linkedinLink">LinkedIn Post Link:</label>
+                            <input type="url" id="linkedinLink" name="linkedinLink" required>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitProjectBtn">Submit Project</button>
+                    </form>
+                </div>
+
+                <!-- Submission Status (for completed submissions) -->
+                <div id="submission-status" style="display: none;">
+                    <div class="submission-status">
+                        <h3>✅ Project Submitted Successfully!</h3>
+                        <div class="submission-details">
+                            <p><strong>GitHub Repository:</strong> <a id="submitted-github" href="#"
+                                    target="_blank"></a></p>
+                            <p><strong>LinkedIn Post:</strong> <a id="submitted-linkedin" href="#" target="_blank"></a>
+                            </p>
+                            <div class="submission-timestamp" id="submission-timestamp"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentTeam = null;
+        let isLoading = false;
+
+        // Show/hide loader
+        function showLoader(text = 'Loading...') {
+            const loader = document.getElementById('loader');
+            const loaderText = loader.querySelector('.loader-text');
+            loaderText.textContent = text;
+            loader.style.display = 'flex';
+            isLoading = true;
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            const dashboardContainer = document.getElementById('dashboardContainer');
+
+            setTimeout(() => {
+                loader.style.display = 'none';
+                dashboardContainer.classList.add('loaded');
+                isLoading = false;
+            }, 500); // Small delay for smooth transition
+        }
+
+        // Show skeleton loading
+        function showSkeleton() {
+            document.getElementById('team-skeleton').style.display = 'block';
+            document.getElementById('no-team').style.display = 'none';
+            document.getElementById('has-team').style.display = 'none';
+        }
+
+        function hideSkeleton() {
+            document.getElementById('team-skeleton').style.display = 'none';
+        }
+
+        // Load team data on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoader('Loading your dashboard...');
+
+            try {
+                // Add a minimum loading time for better UX
+                const [teamData] = await Promise.all([
+                    loadTeamData(),
+                    new Promise(resolve => setTimeout(resolve, 1000))
+                ]);
+
+                hideLoader();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                hideLoader();
+                showError('Failed to load dashboard data');
+            }
+        });
+
+        async function loadTeamData() {
+            try {
+                showSkeleton();
+
+                const response = await fetch('/api/team/my-team');
+                const data = await response.json();
+
+                hideSkeleton();
+
+                if (data.hasTeam) {
+                    currentTeam = data.team;
+                    showTeamDetails();
+                } else {
+                    showTeamForm();
+                }
+
+                return data;
+            } catch (error) {
+                hideSkeleton();
+                console.error('Error loading team data:', error);
+                showError('Failed to load team data');
+                throw error;
+            }
+        }
+
+        function showTeamForm() {
+            document.getElementById('no-team').style.display = 'block';
+            document.getElementById('has-team').style.display = 'none';
+        }
+
+        function showTeamDetails() {
+            document.getElementById('no-team').style.display = 'none';
+            document.getElementById('has-team').style.display = 'block';
+
+            const teamDetailsDiv = document.getElementById('team-details');
+            const statusClass = currentTeam.status === 'approved' ? 'status-approved' :
+                currentTeam.status === 'rejected' ? 'status-rejected' : 'status-pending';
+
+            teamDetailsDiv.innerHTML = `
+                <div class="team-info">
+                    <h3>${currentTeam.teamName}</h3>
+                    <p><strong>Track:</strong> ${currentTeam.track}</p>
+                    <p><strong>Topic:</strong> ${currentTeam.topic}</p>
+                    <p><strong>Status:</strong> <span class="${statusClass}">${currentTeam.status.toUpperCase()}</span></p>
+                    ${currentTeam.statusDescription ? `<p><strong>Status Description:</strong> ${currentTeam.statusDescription}</p>` : ''}
+                    <p><strong>Members:</strong></p>
+                    <ul>
+                        ${currentTeam.memberDetails.map(member => `<li>${member.name} (${member.regNumber})</li>`).join('')}
+                    </ul>
+                    <p><strong>PPT Link:</strong> <a href="${currentTeam.pptLink}" target="_blank">View Presentation</a></p>
+                    <p><strong>Description:</strong> ${currentTeam.description}</p>
+                </div>
+            `;
+
+            // Check if team has already submitted
+            if (currentTeam.githubLink && currentTeam.linkedinLink) {
+                showSubmissionStatus();
+            } else if (currentTeam.status === 'approved' && currentTeam.submissionVisible) {
+                // Show submission form if team is approved and hasn't submitted yet
+                document.getElementById('submission-form').style.display = 'block';
+                document.getElementById('submission-status').style.display = 'none';
+            } else {
+                // Hide both submission form and status
+                document.getElementById('submission-form').style.display = 'none';
+                document.getElementById('submission-status').style.display = 'none';
+            }
+        }
+
+        function showSubmissionStatus() {
+            document.getElementById('submission-form').style.display = 'none';
+            document.getElementById('submission-status').style.display = 'block';
+
+            // Update submission details
+            document.getElementById('submitted-github').href = currentTeam.githubLink;
+            document.getElementById('submitted-github').textContent = currentTeam.githubLink;
+            document.getElementById('submitted-linkedin').href = currentTeam.linkedinLink;
+            document.getElementById('submitted-linkedin').textContent = currentTeam.linkedinLink;
+
+            // Format and show submission timestamp
+            if (currentTeam.submittedAt) {
+                const submissionDate = new Date(currentTeam.submittedAt._seconds * 1000);
+                document.getElementById('submission-timestamp').textContent =
+                    `Submitted on: ${submissionDate.toLocaleString()}`;
+            }
+        }
+
+        // Team creation form handler
+        document.getElementById('teamForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (isLoading) return;
+
+            const submitBtn = document.getElementById('createTeamBtn');
+            submitBtn.classList.add('btn-loading');
+            submitBtn.textContent = 'Creating...';
+
+            const formData = new FormData(e.target);
+            const memberRegNumbers = [
+                formData.get('member1').toUpperCase(),
+                formData.get('member2').toUpperCase()
+            ];
+
+            if (formData.get('member3')) {
+                memberRegNumbers.push(formData.get('member3').toUpperCase());
+            }
+
+            const teamData = {
+                teamName: formData.get('teamName'),
+                memberRegNumbers,
+                track: formData.get('track'),
+                topic: formData.get('topic'),
+                pptLink: formData.get('pptLink'),
+                description: formData.get('description')
+            };
+
+            try {
+                const response = await fetch('/api/team/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(teamData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess(data.message);
+                    setTimeout(() => {
+                        showLoader('Updating your team information...');
+                        setTimeout(() => location.reload(), 1000);
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Team creation failed');
+                }
+            } catch (error) {
+                console.error('Team creation error:', error);
+                showError('Team creation failed. Please try again.');
+            } finally {
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.textContent = 'Create Team';
+            }
+        });
+
+        // Submission form handler
+        document.getElementById('submissionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (isLoading) return;
+
+            const submitBtn = document.getElementById('submitProjectBtn');
+            submitBtn.classList.add('btn-loading');
+            submitBtn.textContent = 'Submitting...';
+
+            const formData = new FormData(e.target);
+            const submissionData = {
+                githubLink: formData.get('githubLink'),
+                linkedinLink: formData.get('linkedinLink')
+            };
+
+            try {
+                const response = await fetch('/api/team/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(submissionData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess(data.message);
+
+                    // Update current team data with submission info
+                    currentTeam.githubLink = submissionData.githubLink;
+                    currentTeam.linkedinLink = submissionData.linkedinLink;
+                    currentTeam.submittedAt = { _seconds: Date.now() / 1000 };
+
+                    // Show submission status instead of form
+                    setTimeout(() => {
+                        showSubmissionStatus();
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Submission failed');
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                showError('Submission failed. Please try again.');
+            } finally {
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.textContent = 'Submit Project';
+            }
+        });
+
+        // Auto-uppercase registration number inputs
+        ['member1', 'member2', 'member3'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.toUpperCase();
+                });
+            }
+        });
+
+        // Sign out handler
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+            if (isLoading) return;
+
+            showLoader('Signing out...');
+            try {
+                await fetch('/api/auth/signout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Sign out error:', error);
+                hideLoader();
+                showError('Sign out failed. Please try again.');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.className = 'error-message';
+            errorDiv.style.display = 'block';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.className = 'success-message';
+            errorDiv.style.display = 'block';
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Refresh team data periodically (every 30 seconds)
+        setInterval(async () => {
+            if (!isLoading && currentTeam) {
+                try {
+                    const response = await fetch('/api/team/my-team');
+                    const data = await response.json();
+
+                    if (data.hasTeam && JSON.stringify(data.team) !== JSON.stringify(currentTeam)) {
+                        // Team data has changed, update the display
+                        currentTeam = data.team;
+                        showTeamDetails();
+                    }
+                } catch (error) {
+                    // Silently fail for background updates
+                    console.log('Background update failed:', error);
+                }
+            }
+        }, 30000);
+    </script>
+    <script>
+        // Help Modal functionality
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            document.getElementById('helpModal').style.display = 'block';
+        });
+
+        document.getElementById('helpClose').addEventListener('click', () => {
+            document.getElementById('helpModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            const helpModal = document.getElementById('helpModal');
+            if (event.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.getElementById('helpModal').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
