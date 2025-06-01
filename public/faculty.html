@@ -145,81 +145,79 @@
     </div>
 
     <script>
-        // Security: Override console methods to hide sensitive information
+        // Security layer to hide API endpoints from console
         (function() {
-            const originalLog = console.log;
-            const originalError = console.error;
-            const originalWarn = console.warn;
+            'use strict';
             
-            // Filter function to hide API endpoints and sensitive data
-            function filterSensitiveData(args) {
+            // Store original console methods
+            const originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn,
+                info: console.info
+            };
+
+            // Override console methods to filter sensitive information
+            function filterSensitiveInfo(args) {
                 return args.map(arg => {
                     if (typeof arg === 'string') {
-                        // Hide API endpoints
-                        arg = arg.replace(/\/api\/[^?\s]*/g, '/api/[HIDDEN]');
-                        // Hide specific paths
-                        arg = arg.replace(/faculty\/(users|teams|submissions)/g, 'faculty/[HIDDEN]');
-                        // Hide localhost URLs
-                        arg = arg.replace(/localhost:\d+\/api\/[^?\s]*/g, 'localhost:[PORT]/api/[HIDDEN]');
+                        // Hide API endpoints and sensitive URLs
+                        return arg
+                            .replace(/\/api\/faculty\/[a-zA-Z0-9\/]+/g, '/api/faculty/[HIDDEN]')
+                            .replace(/\/api\/[a-zA-Z0-9\/]+/g, '/api/[HIDDEN]')
+                            .replace(/localhost:\d+/g, '[HOST]')
+                            .replace(/http:\/\/[^\/\s]+/g, '[URL]')
+                            .replace(/https:\/\/[^\/\s]+/g, '[URL]');
                     }
                     return arg;
                 });
             }
-            
-            // Only filter in production or when not in debug mode
-            if (window.location.hostname !== 'localhost' && !window.__DEBUG_MODE__) {
+
+            // Apply filtering only in production mode
+            if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
                 console.log = function(...args) {
-                    originalLog.apply(console, filterSensitiveData(args));
+                    originalConsole.log.apply(console, filterSensitiveInfo(args));
                 };
                 
                 console.error = function(...args) {
-                    originalError.apply(console, filterSensitiveData(args));
+                    originalConsole.error.apply(console, filterSensitiveInfo(args));
                 };
                 
                 console.warn = function(...args) {
-                    originalWarn.apply(console, filterSensitiveData(args));
+                    originalConsole.warn.apply(console, filterSensitiveInfo(args));
+                };
+                
+                console.info = function(...args) {
+                    originalConsole.info.apply(console, filterSensitiveInfo(args));
                 };
             }
         })();
 
-        // Configuration object to centralize API endpoints
+        // API endpoint configuration (obfuscated)
         const API_CONFIG = {
-            baseURL: window.location.origin,
+            base: window.location.origin,
             endpoints: {
-                users: 'u',
-                teams: 't', 
-                submissions: 's',
-                approve: 'a',
-                signout: 'so'
+                users: atob('L2FwaS9mYWN1bHR5L3VzZXJz'), // base64 encoded
+                teams: atob('L2FwaS9mYWN1bHR5L3RlYW1z'),
+                submissions: atob('L2FwaS9mYWN1bHR5L3N1Ym1pc3Npb25z'),
+                approve: atob('L2FwaS9mYWN1bHR5L3RlYW0vYXBwcm92ZQ=='),
+                signout: atob('L2FwaS9hdXRoL3NpZ25vdXQ=')
             }
         };
 
-        // Function to build API URLs
-        function buildApiUrl(endpoint) {
-            const endpointMap = {
-                'u': '/api/faculty/users',
-                't': '/api/faculty/teams',
-                's': '/api/faculty/submissions',
-                'a': '/api/faculty/team/approve',
-                'so': '/api/auth/signout'
-            };
-            return endpointMap[endpoint] || endpoint;
-        }
-
-        // Secure fetch wrapper
-        async function secureApiFetch(endpoint, options = {}) {
-            const url = buildApiUrl(endpoint);
-            const defaultOptions = {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            };
-            
-            const fetchOptions = { ...defaultOptions, ...options };
+        // Secure API wrapper
+        async function secureApiCall(endpoint, options = {}) {
+            const url = API_CONFIG.base + endpoint;
             
             try {
-                const response = await fetch(url, fetchOptions);
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
                 
                 if (!response.ok) {
                     throw new Error(`Request failed with status: ${response.status}`);
@@ -232,7 +230,7 @@
                 
                 return await response.json();
             } catch (error) {
-                // Log error without exposing API details
+                // Log sanitized error without exposing URLs
                 console.error('API request failed:', error.message);
                 throw error;
             }
@@ -291,7 +289,7 @@
             updateStatus('users', 'loading', 'Loading users...');
             
             try {
-                users = await secureApiFetch('u');
+                users = await secureApiCall(API_CONFIG.endpoints.users);
                 
                 if (!Array.isArray(users)) {
                     throw new Error('Invalid data format received');
@@ -300,6 +298,7 @@
                 renderUsersTable();
                 updateStatus('users', 'online', `${users.length} users loaded`);
             } catch (error) {
+                console.error('Failed to load users:', error.message);
                 updateStatus('users', 'error', 'Failed to load users');
                 showMessage('Failed to load users: ' + error.message, 'error');
             }
@@ -309,7 +308,7 @@
             updateStatus('teams', 'loading', 'Loading teams...');
             
             try {
-                teams = await secureApiFetch('t');
+                teams = await secureApiCall(API_CONFIG.endpoints.teams);
                 
                 if (!Array.isArray(teams)) {
                     throw new Error('Invalid data format received');
@@ -318,6 +317,7 @@
                 renderTeamsTable();
                 updateStatus('teams', 'online', `${teams.length} teams loaded`);
             } catch (error) {
+                console.error('Failed to load teams:', error.message);
                 updateStatus('teams', 'error', 'Failed to load teams');
                 showMessage('Failed to load teams: ' + error.message, 'error');
             }
@@ -327,7 +327,7 @@
             updateStatus('submissions', 'loading', 'Loading submissions...');
             
             try {
-                submissions = await secureApiFetch('s');
+                submissions = await secureApiCall(API_CONFIG.endpoints.submissions);
                 
                 if (!Array.isArray(submissions)) {
                     throw new Error('Invalid data format received');
@@ -336,6 +336,7 @@
                 renderSubmissionsTable();
                 updateStatus('submissions', 'online', `${submissions.length} submissions loaded`);
             } catch (error) {
+                console.error('Failed to load submissions:', error.message);
                 updateStatus('submissions', 'error', 'Failed to load submissions');
                 showMessage('Failed to load submissions: ' + error.message, 'error');
             }
@@ -506,7 +507,7 @@
                 
                 showMessage(`${filename} downloaded successfully!`, 'success');
             } catch (error) {
-                console.error('Excel download failed');
+                console.error('Excel download failed:', error.message);
                 showMessage('Failed to download Excel file', 'error');
             }
         }
@@ -558,21 +559,22 @@
             };
 
             try {
-                const data = await secureApiFetch('a', {
+                const result = await secureApiCall(API_CONFIG.endpoints.approve, {
                     method: 'POST',
                     body: JSON.stringify(approvalData)
                 });
-                
-                if (data.success) {
-                    showMessage(data.message, 'success');
+
+                if (result.success) {
+                    showMessage(result.message, 'success');
                 } else {
-                    throw new Error(data.error || 'Approval failed');
+                    throw new Error(result.error || 'Approval failed');
                 }
 
                 document.getElementById('approval-modal').style.display = 'none';
                 loadTeams(); // Reload teams
                 loadSubmissions(); // Reload submissions to get updated data
             } catch (error) {
+                console.error('Approval failed:', error.message);
                 showMessage('Approval failed: ' + error.message, 'error');
             }
         });
@@ -580,9 +582,14 @@
         // Sign out handler
         document.getElementById('signOutBtn').addEventListener('click', async () => {
             try {
-                await secureApiFetch('so', { method: 'POST' });
-                window.location.href = '/';
+                const response = await secureApiCall(API_CONFIG.endpoints.signout, { method: 'POST' });
+                if (response.success) {
+                    window.location.href = '/';
+                } else {
+                    throw new Error('Sign out failed');
+                }
             } catch (error) {
+                console.error('Sign out failed:', error.message);
                 // Still redirect even if API fails
                 window.location.href = '/';
             }
@@ -657,12 +664,6 @@
         document.querySelector('.tabs').addEventListener('mouseleave', () => {
             shortcuts.style.opacity = '0';
         });
-
-        // Enable debug mode by setting window.__DEBUG_MODE__ = true in console
-        // This will show full API endpoints for development
-        if (window.location.search.includes('debug=true')) {
-            window.__DEBUG_MODE__ = true;
-        }
     </script>
 
     <style>
