@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty Dashboard - Hackathon</title>
     <link rel="stylesheet" href="./css/faculty.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -25,11 +26,12 @@
         <div id="users-tab" class="tab-content active">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Registered Users</h2>
-                <div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
                     <div id="users-status" class="status-indicator status-loading">
                         <span class="loading-spinner"></span>
                         Loading users...
                     </div>
+                    <button onclick="downloadUsersExcel()" class="download-btn">Download Excel</button>
                     <button onclick="loadUsers()" class="refresh-btn">Refresh</button>
                 </div>
             </div>
@@ -55,11 +57,12 @@
         <div id="teams-tab" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Team Requests</h2>
-                <div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
                     <div id="teams-status" class="status-indicator status-loading">
                         <span class="loading-spinner"></span>
                         Loading teams...
                     </div>
+                    <button onclick="downloadTeamsExcel()" class="download-btn">Download Excel</button>
                     <button onclick="loadTeams()" class="refresh-btn">Refresh</button>
                 </div>
             </div>
@@ -86,11 +89,12 @@
         <div id="submissions-tab" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Project Submissions</h2>
-                <div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
                     <div id="submissions-status" class="status-indicator status-loading">
                         <span class="loading-spinner"></span>
                         Loading submissions...
                     </div>
+                    <button onclick="downloadSubmissionsExcel()" class="download-btn">Download Excel</button>
                     <button onclick="loadSubmissions()" class="refresh-btn">Refresh</button>
                 </div>
             </div>
@@ -141,6 +145,99 @@
     </div>
 
     <script>
+        // Security: Override console methods to hide sensitive information
+        (function() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            
+            // Filter function to hide API endpoints and sensitive data
+            function filterSensitiveData(args) {
+                return args.map(arg => {
+                    if (typeof arg === 'string') {
+                        // Hide API endpoints
+                        arg = arg.replace(/\/api\/[^?\s]*/g, '/api/[HIDDEN]');
+                        // Hide specific paths
+                        arg = arg.replace(/faculty\/(users|teams|submissions)/g, 'faculty/[HIDDEN]');
+                        // Hide localhost URLs
+                        arg = arg.replace(/localhost:\d+\/api\/[^?\s]*/g, 'localhost:[PORT]/api/[HIDDEN]');
+                    }
+                    return arg;
+                });
+            }
+            
+            // Only filter in production or when not in debug mode
+            if (window.location.hostname !== 'localhost' && !window.__DEBUG_MODE__) {
+                console.log = function(...args) {
+                    originalLog.apply(console, filterSensitiveData(args));
+                };
+                
+                console.error = function(...args) {
+                    originalError.apply(console, filterSensitiveData(args));
+                };
+                
+                console.warn = function(...args) {
+                    originalWarn.apply(console, filterSensitiveData(args));
+                };
+            }
+        })();
+
+        // Configuration object to centralize API endpoints
+        const API_CONFIG = {
+            baseURL: window.location.origin,
+            endpoints: {
+                users: 'u',
+                teams: 't', 
+                submissions: 's',
+                approve: 'a',
+                signout: 'so'
+            }
+        };
+
+        // Function to build API URLs
+        function buildApiUrl(endpoint) {
+            const endpointMap = {
+                'u': '/api/faculty/users',
+                't': '/api/faculty/teams',
+                's': '/api/faculty/submissions',
+                'a': '/api/faculty/team/approve',
+                'so': '/api/auth/signout'
+            };
+            return endpointMap[endpoint] || endpoint;
+        }
+
+        // Secure fetch wrapper
+        async function secureApiFetch(endpoint, options = {}) {
+            const url = buildApiUrl(endpoint);
+            const defaultOptions = {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            const fetchOptions = { ...defaultOptions, ...options };
+            
+            try {
+                const response = await fetch(url, fetchOptions);
+                
+                if (!response.ok) {
+                    throw new Error(`Request failed with status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Invalid response format. Please check authentication.');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                // Log error without exposing API details
+                console.error('API request failed:', error.message);
+                throw error;
+            }
+        }
+
         let currentTab = 'users';
         let users = [];
         let teams = [];
@@ -194,12 +291,7 @@
             updateStatus('users', 'loading', 'Loading users...');
             
             try {
-                const response = await fetch('/api/faculty/users');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                users = await response.json();
+                users = await secureApiFetch('u');
                 
                 if (!Array.isArray(users)) {
                     throw new Error('Invalid data format received');
@@ -208,7 +300,6 @@
                 renderUsersTable();
                 updateStatus('users', 'online', `${users.length} users loaded`);
             } catch (error) {
-                console.error('Error loading users:', error);
                 updateStatus('users', 'error', 'Failed to load users');
                 showMessage('Failed to load users: ' + error.message, 'error');
             }
@@ -218,12 +309,7 @@
             updateStatus('teams', 'loading', 'Loading teams...');
             
             try {
-                const response = await fetch('/api/faculty/teams');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                teams = await response.json();
+                teams = await secureApiFetch('t');
                 
                 if (!Array.isArray(teams)) {
                     throw new Error('Invalid data format received');
@@ -232,7 +318,6 @@
                 renderTeamsTable();
                 updateStatus('teams', 'online', `${teams.length} teams loaded`);
             } catch (error) {
-                console.error('Error loading teams:', error);
                 updateStatus('teams', 'error', 'Failed to load teams');
                 showMessage('Failed to load teams: ' + error.message, 'error');
             }
@@ -242,12 +327,7 @@
             updateStatus('submissions', 'loading', 'Loading submissions...');
             
             try {
-                const response = await fetch('/api/faculty/submissions');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                submissions = await response.json();
+                submissions = await secureApiFetch('s');
                 
                 if (!Array.isArray(submissions)) {
                     throw new Error('Invalid data format received');
@@ -256,7 +336,6 @@
                 renderSubmissionsTable();
                 updateStatus('submissions', 'online', `${submissions.length} submissions loaded`);
             } catch (error) {
-                console.error('Error loading submissions:', error);
                 updateStatus('submissions', 'error', 'Failed to load submissions');
                 showMessage('Failed to load submissions: ' + error.message, 'error');
             }
@@ -280,7 +359,7 @@
                     <td>${user.mobileNumber || 'N/A'}</td>
                     <td>${user.hostelBlock || 'N/A'}</td>
                     <td><span class="status-${user.profileComplete ? 'complete' : 'incomplete'}">${user.profileComplete ? 'Complete' : 'Incomplete'}</span></td>
-                    <td>${user.createdAt ? new Date(user.createdAt._seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                    <td>${user.createdAt ? formatDate(user.createdAt) : 'N/A'}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -337,10 +416,99 @@
                     <td>${submission.topic || 'N/A'}</td>
                     <td><a href="${submission.githubLink}" target="_blank">GitHub</a></td>
                     <td><a href="${submission.linkedinLink}" target="_blank">LinkedIn</a></td>
-                    <td>${submission.submittedAt ? new Date(submission.submittedAt._seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                    <td>${submission.submittedAt ? formatDate(submission.submittedAt) : 'N/A'}</td>
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        function formatDate(dateObj) {
+            if (dateObj && dateObj._seconds) {
+                return new Date(dateObj._seconds * 1000).toLocaleDateString();
+            } else if (dateObj) {
+                return new Date(dateObj).toLocaleDateString();
+            }
+            return 'N/A';
+        }
+
+        // Excel Download Functions
+        function downloadUsersExcel() {
+            if (users.length === 0) {
+                showMessage('No users data to download', 'error');
+                return;
+            }
+
+            const excelData = users.map(user => ({
+                'Name': user.name || 'N/A',
+                'Email': user.email || 'N/A',
+                'Registration Number': user.regNumber || 'N/A',
+                'Mobile Number': user.mobileNumber || 'N/A',
+                'Hostel Block': user.hostelBlock || 'N/A',
+                'Profile Status': user.profileComplete ? 'Complete' : 'Incomplete',
+                'Registered At': user.createdAt ? formatDate(user.createdAt) : 'N/A'
+            }));
+
+            downloadExcel(excelData, 'Users_Data');
+        }
+
+        function downloadTeamsExcel() {
+            if (teams.length === 0) {
+                showMessage('No teams data to download', 'error');
+                return;
+            }
+
+            const excelData = teams.map(team => ({
+                'Team Name': team.teamName || 'N/A',
+                'Leader': team.memberDetails && team.memberDetails[0] ? team.memberDetails[0].name : 'N/A',
+                'Leader Email': team.memberDetails && team.memberDetails[0] ? team.memberDetails[0].email : 'N/A',
+                'Members': team.memberDetails ? team.memberDetails.map(m => `${m.name} (${m.regNumber})`).join('; ') : 'N/A',
+                'Track': team.track || 'N/A',
+                'Topic': team.topic || 'N/A',
+                'Description': team.description || 'N/A',
+                'PPT Link': team.pptLink || 'N/A',
+                'Status': (team.status || 'pending').toUpperCase(),
+                'Status Description': team.statusDescription || 'N/A'
+            }));
+
+            downloadExcel(excelData, 'Teams_Data');
+        }
+
+        function downloadSubmissionsExcel() {
+            if (submissions.length === 0) {
+                showMessage('No submissions data to download', 'error');
+                return;
+            }
+
+            const excelData = submissions.map(submission => ({
+                'Team Name': submission.teamName || 'N/A',
+                'Leader': submission.memberDetails && submission.memberDetails[0] ? submission.memberDetails[0].name : 'N/A',
+                'Leader Email': submission.memberDetails && submission.memberDetails[0] ? submission.memberDetails[0].email : 'N/A',
+                'Members': submission.memberDetails ? submission.memberDetails.map(m => `${m.name} (${m.regNumber})`).join('; ') : 'N/A',
+                'Track': submission.track || 'N/A',
+                'Topic': submission.topic || 'N/A',
+                'Description': submission.description || 'N/A',
+                'GitHub Link': submission.githubLink || 'N/A',
+                'LinkedIn Link': submission.linkedinLink || 'N/A',
+                'Submitted At': submission.submittedAt ? formatDate(submission.submittedAt) : 'N/A'
+            }));
+
+            downloadExcel(excelData, 'Submissions_Data');
+        }
+
+        function downloadExcel(data, filename) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `${filename}_${timestamp}.xlsx`);
+                
+                showMessage(`${filename} downloaded successfully!`, 'success');
+            } catch (error) {
+                console.error('Excel download failed');
+                showMessage('Failed to download Excel file', 'error');
+            }
         }
 
         function openApprovalModal(teamId) {
@@ -390,19 +558,11 @@
             };
 
             try {
-                const response = await fetch('/api/faculty/team/approve', {
+                const data = await secureApiFetch('a', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(approvalData)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
                 
-                const data = await response.json();
                 if (data.success) {
                     showMessage(data.message, 'success');
                 } else {
@@ -413,7 +573,6 @@
                 loadTeams(); // Reload teams
                 loadSubmissions(); // Reload submissions to get updated data
             } catch (error) {
-                console.error('Approval error:', error);
                 showMessage('Approval failed: ' + error.message, 'error');
             }
         });
@@ -421,14 +580,9 @@
         // Sign out handler
         document.getElementById('signOutBtn').addEventListener('click', async () => {
             try {
-                const response = await fetch('/api/auth/signout', { method: 'POST' });
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
-                    throw new Error('Sign out failed');
-                }
+                await secureApiFetch('so', { method: 'POST' });
+                window.location.href = '/';
             } catch (error) {
-                console.error('Sign out error:', error);
                 // Still redirect even if API fails
                 window.location.href = '/';
             }
@@ -503,6 +657,41 @@
         document.querySelector('.tabs').addEventListener('mouseleave', () => {
             shortcuts.style.opacity = '0';
         });
+
+        // Enable debug mode by setting window.__DEBUG_MODE__ = true in console
+        // This will show full API endpoints for development
+        if (window.location.search.includes('debug=true')) {
+            window.__DEBUG_MODE__ = true;
+        }
     </script>
+
+    <style>
+        /* Download Button Styling */
+        .download-btn {
+            background: linear-gradient(45deg, #ff6b35, #ff8e53);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.5);
+            background: linear-gradient(45deg, #ff8e53, #ff6b35);
+        }
+
+        /* Fix for text color */
+        body {
+            color: #ffffff00;
+        }
+    </style>
 </body>
 </html>
